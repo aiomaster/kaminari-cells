@@ -1,3 +1,5 @@
+require 'kaminari/helpers/paginator'
+
 module Kaminari
   module Cells
 
@@ -62,7 +64,7 @@ module Kaminari
       private :relevant_pages
 
       def page_tag(page)
-        @last = Page.new @template, @options.merge(:page => page)
+        @last = concept("kaminari/cells/page", model, options.merge(current_page: current_page, page: page))
       end
 
       %w[first_page prev_page next_page last_page gap].each do |tag|
@@ -73,101 +75,13 @@ module Kaminari
         DEF
       end
 
-      # Wraps a "page number" and provides some utility methods
-      class PageProxy
-        include Comparable
-
-        def initialize(options, page, last) #:nodoc:
-          @options, @page, @last = options, page, last
-        end
-
-        # the page number
-        def number
-          @page
-        end
-
-        # current page or not
-        def current?
-          @page == @options[:current_page]
-        end
-
-        # the first page or not
-        def first?
-          @page == 1
-        end
-
-        # the last page or not
-        def last?
-          @page == @options[:total_pages]
-        end
-
-        # the previous page or not
-        def prev?
-          @page == @options[:current_page] - 1
-        end
-
-        # the next page or not
-        def next?
-          @page == @options[:current_page] + 1
-        end
-
-        # relationship with the current page
-        def rel
-          if next?
-            'next'
-          elsif prev?
-            'prev'
-          end
-        end
-
-        # within the left outer window or not
-        def left_outer?
-          @page <= @options[:left]
-        end
-
-        # within the right outer window or not
-        def right_outer?
-          @options[:total_pages] - @page < @options[:right]
-        end
-
-        # inside the inner window or not
-        def inside_window?
-          (@options[:current_page] - @page).abs <= @options[:window]
-        end
-
-        def single_gap?
-          (@page == @options[:current_page] - @options[:window] - 1) && (@page == @options[:left] + 1) ||
-            (@page == @options[:current_page] + @options[:window] + 1) && (@page == @options[:total_pages] - @options[:right])
-        end
-
-        def out_of_range?
-          @page > @options[:total_pages]
-        end
+      class PageProxy < Kaminari::Helpers::Paginator::PageProxy
 
         # The last rendered tag was "truncated" or not
         def was_truncated?
           @last.is_a? Gap
         end
 
-        def to_i
-          number
-        end
-
-        def to_s
-          number.to_s
-        end
-
-        def +(other)
-          to_i + other.to_i
-        end
-
-        def -(other)
-          to_i - other.to_i
-        end
-
-        def <=>(other)
-          to_i <=> other.to_i
-        end
       end
 
     end
